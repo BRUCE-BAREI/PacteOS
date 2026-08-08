@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>PacteOS v2 — Escape Game</title>
+<style>
+:root{
+ --bg:#070b10;--panel:#101720;--panel2:#0b1118;--text:#f2f6f8;--muted:#9aabba;
+ --accent:#d7b56c;--line:#263442;--ok:#7ad58b;--bad:#ff8181;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:radial-gradient(circle at top,#162330 0,#090e14 52%,#05070a 100%);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;min-height:100%}
+body{padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+.shell{max-width:820px;margin:auto;padding:14px}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;position:sticky;top:0;z-index:20;background:rgba(7,11,16,.92);backdrop-filter:blur(12px);padding:8px 0 12px}
+.brand{font-weight:1000;letter-spacing:.08em}.clock{font-variant-numeric:tabular-nums;font-weight:900;border:1px solid var(--line);padding:7px 11px;border-radius:999px}
+.phone{background:linear-gradient(180deg,#111923,#0a1017);border:1px solid #283846;border-radius:30px;min-height:760px;overflow:hidden;box-shadow:0 30px 90px rgba(0,0,0,.45)}
+.status{height:28px;padding:5px 14px;display:flex;justify-content:space-between;align-items:center;background:#080d12;color:#c7d2db;font-size:12px}
+.screen{padding:18px}.hidden{display:none!important}
+.hero{padding:28px 18px 20px;text-align:center}.hero h1{font-size:clamp(34px,9vw,56px);margin:.15em 0 .3em}.hero p{color:var(--muted);line-height:1.55}
+.quote{border-left:3px solid var(--accent);padding:12px 14px;background:#0b1117;border-radius:0 12px 12px 0;margin:16px 0;line-height:1.55}
+button{border:0;border-radius:14px;padding:14px 16px;font-size:16px;font-weight:900;cursor:pointer}
+.primary{width:100%;background:var(--accent);color:#17130d}.secondary{width:100%;background:#1c2732;color:#eef3f6;margin-top:10px}
+.apps{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;padding:18px 6px 8px}
+.app{background:transparent;color:white;padding:0;text-align:center}.icon{width:68px;height:68px;border-radius:18px;margin:auto;display:grid;place-items:center;font-size:31px;background:linear-gradient(145deg,#253444,#151e28);border:1px solid #334759}.app span{display:block;font-size:12px;margin-top:7px;color:#d9e1e7}
+.titlebar{display:flex;align-items:center;gap:10px;margin-bottom:14px}.back{width:auto;padding:9px 12px;background:#1b2631;color:white}.titlebar h2{margin:0;font-size:24px}
+.card{background:#0c131a;border:1px solid var(--line);border-radius:16px;padding:15px;margin:12px 0}
+.muted{color:var(--muted)}.small{font-size:13px}
+.values{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.slot{padding:14px;border:1px dashed #3a4a58;border-radius:14px;text-align:center;color:#687887}.slot.ok{border-style:solid;border-color:#3f7c4d;color:#b8ebc1;background:#0e1b13}
+input.answer{width:100%;padding:14px 15px;border-radius:13px;border:1px solid #334657;background:#081017;color:white;font-size:17px;text-transform:uppercase;outline:none}
+.feedback{min-height:22px;margin-top:8px;font-weight:800}.oktxt{color:var(--ok)}.badtxt{color:var(--bad)}
+/* Messages */
+.chat{display:flex;flex-direction:column;gap:9px}.msg{max-width:82%;padding:10px 12px;border-radius:15px;background:#17212b}.msg.me{align-self:flex-end;background:#26374a}.sender{font-size:12px;color:var(--accent);font-weight:900}.time{font-size:11px;color:#8395a5;text-align:right;margin-top:4px}
+/* Notes */
+.note{background:#f0e8c9;color:#2d2a23;border-radius:16px;padding:17px;font-family:Georgia,serif;line-height:1.7}.note p{margin:.5em 0}.note strong{background:#ded2a2;padding:0 3px;border-radius:4px}
+/* Files */
+.file{display:flex;justify-content:space-between;align-items:center;padding:12px;border-bottom:1px solid #24313d}.file:last-child{border-bottom:0}.file button{padding:8px 10px;font-size:13px;background:#1d2a35;color:white}
+.cipher{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:26px;letter-spacing:.08em;text-align:center;padding:18px;background:#080d12;border-radius:12px}
+/* Terminal */
+.terminal{background:#020403;color:#86ff9b;border-radius:14px;padding:14px;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;min-height:360px;box-shadow:inset 0 0 0 1px #15371c}
+.termout{white-space:pre-wrap;line-height:1.45;min-height:280px}.termrow{display:flex;gap:8px;align-items:center;border-top:1px solid #103016;padding-top:10px}.prompt{color:#c8ffd2}.terminput{flex:1;background:transparent;border:0;color:#86ff9b;font:inherit;outline:none}
+.finalword{font-size:clamp(34px,11vw,62px);font-weight:1000;letter-spacing:.08em;color:var(--accent);margin:18px 0;text-align:center}
+</style>
+</head>
+<body>
+<div class="shell">
+<div class="topbar">
+  <div class="brand">PACTEOS v2</div>
+  <div class="clock" id="timer">30:00</div>
+</div>
+
+<div class="phone">
+  <div class="status"><span>21:17</span><span>▮▮▮ Wi‑Fi 73%</span></div>
+
+  <section id="intro" class="screen">
+    <div class="hero">
+      <div class="small muted">Téléphone récupéré — propriétaire inconnu</div>
+      <h1>Le Pacte des 4</h1>
+      <p>Quatre valeurs ont été dispersées dans ce téléphone.</p>
+      <div class="quote">« Si tu veux comprendre ce qui nous liait, ne regarde pas une seule application. Fouille tout. »</div>
+      <p><strong>Objectif :</strong> retrouver les quatre piliers avant la fin des 30 minutes.</p>
+      <button class="primary" onclick="startGame()">Déverrouiller PacteOS</button>
+    </div>
+  </section>
+
+  <section id="home" class="screen hidden">
+    <div class="small muted">PacteOS v2</div>
+    <h2 style="margin:4px 0 0">Téléphone de terrain</h2>
+    <div class="apps">
+      <button class="app" onclick="openApp('messages')"><div class="icon">💬</div><span>Messages</span></button>
+      <button class="app" onclick="openApp('notes')"><div class="icon">📝</div><span>Notes</span></button>
+      <button class="app" onclick="openApp('files')"><div class="icon">📁</div><span>Fichiers</span></button>
+      <button class="app" onclick="openApp('terminal')"><div class="icon">⌨️</div><span>Terminal</span></button>
+      <button class="app" onclick="openApp('pact')"><div class="icon">🔐</div><span>Le Pacte</span></button>
+    </div>
+    <div class="card muted small">Explore librement. Certaines applications donnent une valeur directement, d’autres demandent de comprendre un indice.</div>
+  </section>
+
+  <!-- MESSAGERIE : énigme 4 conservée -->
+  <section id="messages" class="screen hidden">
+    <div class="titlebar"><button class="back" onclick="goHome()">←</button><h2>Toujours ensemble</h2></div>
+    <p class="muted">Conversation récupérée. Les heures semblent étrangement précises.</p>
+    <div class="card chat">
+      <div class="msg"><div class="sender">jean-phi</div>Je serai un peu en retard.<div class="time">14:05</div></div>
+      <div class="msg me"><div class="sender">Marco</div>Pas de souci, on t’attend.<div class="time">14:14</div></div>
+      <div class="msg"><div class="sender">Marion (best binôme ♥️)</div>J’ai pris une bouteille de vin en plus.<div class="time">14:20</div></div>
+      <div class="msg"><div class="sender">Denis</div>Je prends de quoi nous occuper.<div class="time">14:18</div></div>
+      <div class="msg"><div class="sender">jean-phi</div>N'hésitez pas à me dire s'il faut quelque chose.<div class="time">14:01</div></div>
+      <div class="msg me"><div class="sender">Marco</div>Je reste avec Marion, elle est fatiguée.<div class="time">14:09</div></div>
+      <div class="msg"><div class="sender">Marion (best binôme ♥️)</div>Ça, c'est mon binôme !! Merci, on repart tous ensemble.<div class="time">14:04</div></div>
+      <div class="msg"><div class="sender">Denis</div>Personne ne reste derrière.<div class="time">14:05</div></div>
+    </div>
+    
+    <input class="answer" id="ansMessages" placeholder="Valeur trouvée">
+    <button class="primary" onclick="submitValue('messages','ENTRAIDE')">Valider</button>
+    <div class="feedback" id="fbMessages"></div>
+  </section>
+
+  <!-- NOTES : énigme 1, phrases volontairement désordonnées -->
+  <section id="notes" class="screen hidden">
+    <div class="titlebar"><button class="back" onclick="goHome()">←</button><h2>Notes</h2></div>
+    <p class="muted">Une note semble avoir été réorganisée volontairement.</p>
+    
+    <div class="note">
+      <p>Et il <strong>N</strong>’abandonne pas une parole donnée.</p>
+      <p>Il <strong>A</strong>ccepte de ne pas tout contrôler.</p>
+      <p>Quand tout se complique, il <strong>F</strong>ait confiance à ceux qui l’entourent.</p>
+      <p>Alors seulement, une équipe peut <strong>E</strong>xister vraiment.</p>
+      <p>Un <strong>C</strong>amarade n’est pas celui qui parle le plus fort.</p>
+      <p>Il <strong>I</strong>gnore parfois la peur, mais jamais son groupe.</p>
+      <p>Dans les moments difficiles, il <strong>C</strong>hoisit d’avancer avec les autres.</p>
+      <p>Il est celui qui <strong>O</strong>se rester quand les autres partent.</p>
+      <p>Dans le doute, il <strong>N</strong>e cherche pas à briller seul.</p>
+      <hr>
+      
+    </div>
+    <input class="answer" id="ansNotes" placeholder="Valeur trouvée">
+    <button class="primary" onclick="submitValue('notes','CONFIANCE')">Valider</button>
+    <div class="feedback" id="fbNotes"></div>
+  </section>
+
+  <!-- FICHIERS : énigme 2, noms en synonymes -->
+  <section id="files" class="screen hidden">
+    <div class="titlebar"><button class="back" onclick="goHome()">←</button><h2>Fichiers</h2></div>
+    <p class="muted">Les noms des fichiers ont été remplacés par des mots proches, mais aucun n’est la réponse exacte.</p>
+    <div class="card">
+      <div class="file"><span>fidélité.txt</span><button onclick="showFile('f1')">ouvrir</button></div>
+      <div class="file"><span>engagement.txt</span><button onclick="showFile('f2')">ouvrir</button></div>
+      <div class="file"><span>constance.txt</span><button onclick="showFile('f3')">ouvrir</button></div>
+      <div class="file"><span>attachement.txt</span><button onclick="showFile('f4')">ouvrir</button></div>
+    </div>
+    <div id="fileViewer" class="card muted">Sélectionne un fichier.</div>
+    <input class="answer" id="ansFiles" placeholder="Valeur trouvée">
+    <button class="primary" onclick="submitValue('files','LOYAUTE')">Valider</button>
+    <div class="feedback" id="fbFiles"></div>
+  </section>
+
+  <!-- TERMINAL : réponse RESPECTER -->
+  <section id="terminal" class="screen hidden">
+    <div class="titlebar"><button class="back" onclick="goHome()">←</button><h2>Terminal</h2></div>
+    <div class="terminal">
+      <div id="termOut" class="termout">PacteOS Terminal v2
+Des journaux ont été récupérés.
+Tape "help".
+</div>
+      <div class="termrow"><span class="prompt">&gt;</span><input id="termInput" class="terminput" autocomplete="off" spellcheck="false"></div>
+    </div>
+    <div class="card">
+      <p><strong>Quelle est la clé ?</strong></p>
+      <input class="answer" id="ansTerminal" placeholder="Réponse">
+      <button class="primary" onclick="submitValue('terminal','RESPECTER')">Valider</button>
+      <div class="feedback" id="fbTerminal"></div>
+    </div>
+  </section>
+
+  <section id="pact" class="screen hidden">
+    <div class="titlebar"><button class="back" onclick="goHome()">←</button><h2>Le Pacte</h2></div>
+    <p>Les réponses validées apparaissent ici.</p>
+    <div class="values">
+      <div class="slot" id="slot-CONFIANCE">Valeur inconnue</div>
+      <div class="slot" id="slot-LOYAUTE">Valeur inconnue</div>
+      <div class="slot" id="slot-RESPECTER">Valeur inconnue</div>
+      <div class="slot" id="slot-ENTRAIDE">Valeur inconnue</div>
+    </div>
+
+    <div class="card" id="valueEntry">
+      <p><strong>Entrer une réponse trouvée :</strong></p>
+      <input class="answer" id="globalValue" placeholder="Réponse">
+      <button class="primary" onclick="validateGlobal()">Ajouter au Pacte</button>
+      <div class="feedback" id="fbGlobal"></div>
+    </div>
+
+    <div class="card hidden" id="finalEntry">
+      <p><strong>Les quatre éléments du Pacte sont réunis.</strong></p>
+      <div class="quote">« Quel mot décrit le lien qui unit ceux qui se font confiance, restent loyaux, se respectent et s’entraident ? »</div>
+      <input class="answer" id="finalAnswer" placeholder="Mot final">
+      <button class="primary" onclick="checkFinalAnswer()">Valider le mot final</button>
+      <div class="feedback" id="fbFinal"></div>
+    </div>
+  </section>
+
+  <section id="final" class="screen hidden">
+    <div style="text-align:center;padding:28px 12px">
+      <div class="small muted">PACTE RESTAURÉ</div>
+      <div class="finalword">CAMARADERIE</div>
+      <div class="quote">« Faire confiance. Rester loyal. Respecter les autres. S’entraider. C’est ainsi qu’un groupe devient une camaraderie. »</div>
+      <p>Temps restant : <strong id="remaining"></strong></p>
+      <button class="secondary" onclick="resetGame()">Rejouer</button>
+    </div>
+  </section>
+</div>
+</div>
+
+<script>
+const VALUES=['CONFIANCE','LOYAUTE','RESPECTER','ENTRAIDE'];
+let found=new Set(JSON.parse(localStorage.getItem('pacteosV2Found')||'[]'));
+let endTime=Number(localStorage.getItem('pacteosV2End')||0);
+let timerInt=null;
+
+function norm(s){return (s||'').trim().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^A-Za-z0-9]/g,'').toUpperCase()}
+function startGame(){
+  localStorage.setItem('pacteosV2Started','1');
+  if(!endTime){endTime=Date.now()+30*60*1000;localStorage.setItem('pacteosV2End',String(endTime))}
+  document.getElementById('intro').classList.add('hidden');document.getElementById('home').classList.remove('hidden');
+  tick();timerInt=setInterval(tick,1000);refreshPact();
+}
+function tick(){
+  if(!endTime)return;
+  let ms=Math.max(0,endTime-Date.now()),m=Math.floor(ms/60000),s=Math.floor((ms%60000)/1000);
+  document.getElementById('timer').textContent=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0')
+}
+function hideAll(){document.querySelectorAll('.phone > section').forEach(s=>s.classList.add('hidden'))}
+function openApp(id){hideAll();document.getElementById(id).classList.remove('hidden');if(id==='pact')refreshPact();if(id==='terminal')setTimeout(()=>document.getElementById('termInput').focus(),100)}
+function goHome(){hideAll();document.getElementById('home').classList.remove('hidden')}
+function showFile(id){
+  const v=document.getElementById('fileViewer');
+  if(id==='f1')v.innerHTML='<b>fidélité.txt</b><p>« Quatre pas séparent le message de sa vraie forme. »</p><div class="cipher">PSCEYXI</div>';
+  if(id==='f2')v.innerHTML='<b>engagement.txt</b><p>Note jointe : « Le Pacte compte quatre compagnons. »</p>';
+  if(id==='f3')v.innerHTML='<b>constance.txt</b><p>Indice : « L’alphabet suffit. Reviens en arrière. »</p>';
+  if(id==='f4')v.innerHTML='<b>attachement.txt</b><p>Les quatre fichiers parlent de la même idée, mais un seul mot exact est recherché.</p>';
+}
+function saveFound(){localStorage.setItem('pacteosV2Found',JSON.stringify([...found]));refreshPact()}
+function addValue(v){v=norm(v);if(VALUES.includes(v)){found.add(v);saveFound();return true}return false}
+function submitValue(source,answer){
+  const map={messages:'ansMessages',notes:'ansNotes',files:'ansFiles',terminal:'ansTerminal'};
+  const fbmap={messages:'fbMessages',notes:'fbNotes',files:'fbFiles',terminal:'fbTerminal'};
+  const v=norm(document.getElementById(map[source]).value),fb=document.getElementById(fbmap[source]);
+  if(v===answer){addValue(answer);fb.textContent='Réponse validée et ajoutée au Pacte.';fb.className='feedback oktxt'}
+  else{fb.textContent='Ce n’est pas la bonne réponse.';fb.className='feedback badtxt'}
+}
+function validateGlobal(){
+  const v=norm(document.getElementById('globalValue').value),fb=document.getElementById('fbGlobal');
+  if(addValue(v)){fb.textContent='Réponse ajoutée.';fb.className='feedback oktxt';document.getElementById('globalValue').value=''}
+  else{fb.textContent='Réponse non reconnue.';fb.className='feedback badtxt'}
+}
+function refreshPact(){
+  VALUES.forEach(v=>{
+    const e=document.getElementById('slot-'+v);
+    if(!e)return;
+    const ok=found.has(v);
+    e.classList.toggle('ok',ok);
+    e.textContent=ok ? (v==='LOYAUTE'?'LOYAUTÉ':v) : 'Valeur inconnue';
+  });
+  const ready=VALUES.every(v=>found.has(v));
+  const normal=document.getElementById('valueEntry');
+  const final=document.getElementById('finalEntry');
+  if(normal) normal.classList.toggle('hidden',ready);
+  if(final) final.classList.toggle('hidden',!ready);
+}
+function checkFinalAnswer(){
+  const input=document.getElementById('finalAnswer');
+  const fb=document.getElementById('fbFinal');
+  if(norm(input.value)==='CAMARADERIE'){
+    fb.textContent='Mot final correct. Pacte restauré.';
+    fb.className='feedback oktxt';
+    setTimeout(()=>{
+      hideAll();
+      document.getElementById('final').classList.remove('hidden');
+      const ms=Math.max(0,endTime-Date.now()),m=Math.floor(ms/60000),s=Math.floor((ms%60000)/1000);
+      document.getElementById('remaining').textContent=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+    },450);
+  }else{
+    fb.textContent='Ce n’est pas le mot final.';
+    fb.className='feedback badtxt';
+  }
+}
+function resetGame(){
+  ['pacteosV2Found','pacteosV2End','pacteosV2Started'].forEach(k=>localStorage.removeItem(k));
+  found=new Set();endTime=0;clearInterval(timerInt);document.getElementById('timer').textContent='30:00';
+  hideAll();document.getElementById('intro').classList.remove('hidden');refreshPact()
+}
+
+/* Terminal logic: answer RESPECTER */
+const termInput=document.getElementById('termInput'),termOut=document.getElementById('termOut');
+function termPrint(t){termOut.textContent+=t+'\n';termOut.scrollTop=termOut.scrollHeight}
+function runTerm(cmd){
+  const raw=cmd.trim(),c=raw.toLowerCase();
+  termPrint('> '+raw);
+  if(!c)return;
+  if(c==='help'){
+    termPrint('Commandes : help, list, open <fichier>, clear');
+  }
+  else if(c==='list'){
+    termPrint('principe.log\nmilitaire.log\nregle.log');
+  }
+  else if(c==='clear'){
+    termOut.textContent='';
+  }
+  else if(c==='open principe.log'){
+    termPrint('=== PRINCIPES ===\n\n1. Écouter sans rabaisser.\n2. Accepter les limites des autres.\n3. Ne pas humilier.\n4. Tenir compte de chacun.');
+  }
+  else if(c==='open militaire.log'){
+    termPrint('=== NOTE ===\n\nLa clé se trouve dans les 4 principes de mon armée.');
+  }
+  else if(c==='open regle.log'){
+    termPrint('=== RÈGLE ===\n\nLa clé est un VERBE À L\'INFINITIF.\n\n??????????');
+  }
+  else {
+    termPrint('Commande inconnue. Tape "help".');
+  }
+}
+termInput.addEventListener('keydown',e=>{if(e.key==='Enter'){runTerm(termInput.value);termInput.value=''}});
+
+(function restore(){
+  refreshPact();
+  if(localStorage.getItem('pacteosV2Started')==='1'){
+    document.getElementById('intro').classList.add('hidden');document.getElementById('home').classList.remove('hidden');
+    if(endTime){tick();timerInt=setInterval(tick,1000)}
+  }
+})();
+</script>
+</body>
+</html>
